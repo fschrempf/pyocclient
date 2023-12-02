@@ -776,20 +776,25 @@ class Client(object):
             return res
         raise HTTPResponseError(res)
 
-    def delete_share(self, share_id):
+    def delete_share(self, share_id, share_with=None):
         """Unshares a file or directory
 
         :param share_id: Share ID (int)
         :returns: True if the operation succeeded, False otherwise
         :raises: HTTPResponseError in case an HTTP error status was returned
         """
-        if not isinstance(share_id, int):
+        if not (isinstance(share_id, int) or isinstance(share_id, str)):
             return False
+
+        uri = 'shares/' + parse.quote(share_id)
+
+        if share_with and isinstance(share_with, str):
+            uri += '?' + parse.urlencode({ 'shareWith': share_with })
 
         res = self._make_ocs_request(
             'DELETE',
             self.OCS_SERVICE_SHARE,
-            'shares/' + str(share_id)
+            uri
         )
         if res.status_code == 200:
             return res
@@ -986,6 +991,9 @@ class Client(object):
             if isinstance(shared_with_me, bool) and shared_with_me:
                 args['shared_with_me'] = "true"
                 del args['path']
+            space = kwargs.get('space')
+            if isinstance(space, str) and space:
+                args['space_ref'] = space
 
             data += parse.urlencode(args)
 
@@ -1485,6 +1493,10 @@ class Client(object):
                      'shareWith': group,
                      'path': path,
                      'permissions': perms}
+
+        space = kwargs.get('space')
+        if space:
+            post_data['space_ref'] = space
 
         res = self._make_ocs_request(
             'POST',
