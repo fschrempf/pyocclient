@@ -1965,14 +1965,17 @@ class Client(object):
                 self._version += '-' + edition_el.text
 
             if 'dav' in apps and 'chunking' in apps['dav']:
-                chunking_version = float(apps['dav']['chunking'])
-                if self._dav_endpoint_version > chunking_version:
-                    self._dav_endpoint_version = None
-
-                if self._dav_endpoint_version is None and chunking_version >= 1.0:
+                if not apps['dav']['chunking']:
                     self._dav_endpoint_version = 1
                 else:
-                    self._dav_endpoint_version = 0
+                    chunking_version = float(apps['dav']['chunking'])
+                    if self._dav_endpoint_version > chunking_version:
+                        self._dav_endpoint_version = None
+
+                    if self._dav_endpoint_version is None and chunking_version >= 1.0:
+                        self._dav_endpoint_version = 1
+                    else:
+                        self._dav_endpoint_version = 0
 
             return self._capabilities
         raise HTTPResponseError(res)
